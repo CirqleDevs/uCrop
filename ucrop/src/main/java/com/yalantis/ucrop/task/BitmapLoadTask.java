@@ -1,8 +1,10 @@
 package com.yalantis.ucrop.task;
 
 import android.Manifest.permission;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -10,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -29,6 +32,7 @@ import java.io.OutputStream;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -44,6 +48,10 @@ import okio.Sink;
 public class BitmapLoadTask extends AsyncTask<Void, Void, BitmapLoadTask.BitmapWorkerResult> {
 
     private static final String TAG = "BitmapWorkerTask";
+    private static final String[] PROJECTION = new String[]{
+            MediaStore.Images.Media._ID,
+            MediaStore.Images.ImageColumns.DATA
+    };
 
     private final Context mContext;
     private Uri mInputUri;
@@ -89,15 +97,22 @@ public class BitmapLoadTask extends AsyncTask<Void, Void, BitmapLoadTask.BitmapW
             return new BitmapWorkerResult(new NullPointerException("Input Uri cannot be null"));
         }
 
-        try {
-            processInputUri();
-        } catch (NullPointerException | IOException e) {
-            return new BitmapWorkerResult(e);
-        }
+        ContentResolver contentResolver = mContext.getContentResolver();
+//        Cursor cursor = contentResolver.query(mInputUri, PROJECTION, null, null, null);
+//        if(cursor == null || cursor.getCount() == 0) {
+//            return new BitmapWorkerResult(new FileNotFoundException());
+//        }
+//        final String pathname;
+//        try {
+//            cursor.moveToFirst();
+//            pathname = cursor.getString(cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA));
+//        } finally {
+//            cursor.close();
+//        }
 
         final ParcelFileDescriptor parcelFileDescriptor;
         try {
-            parcelFileDescriptor = mContext.getContentResolver().openFileDescriptor(mInputUri, "r");
+            parcelFileDescriptor = contentResolver.openFileDescriptor(mInputUri, "r");
         } catch (FileNotFoundException e) {
             return new BitmapWorkerResult(e);
         }
